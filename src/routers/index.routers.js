@@ -1,8 +1,10 @@
 import { Router } from 'express';
-import categoriasRouters from './games.routers.js';
+import games from './games.routers.js';
+import customers from './customers.routers.js';
 
 const router = Router();
 
-router.use(categoriasRouters);
+router.use(games);
+router.use(customers);
 
 export default router;
