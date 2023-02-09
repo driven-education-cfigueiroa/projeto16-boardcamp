@@ -21,7 +21,7 @@ export async function listCustomer(req, res) {
     if (result.rowCount === 0) {
       return res.sendStatus(404);
     }
-    res.send(result.rows);
+    res.send(result.rows[0]);
   } catch (error) {
     res.sendStatus(500);
   }
