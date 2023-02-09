@@ -2,26 +2,17 @@ import { db } from '../database/database.connection.js';
 
 export async function listRentals(req, res) {
   try {
-    const result = await db.query(`
+    const rentals = await db.query(`
     SELECT
-        rentals.*,
-        customers.id AS "customerId",
-        customers.name AS "customerName",
-        games.id AS "gameId",
-        games.name AS "gameName"
+      rentals.*,
+      json_build_object('id', customers.id, 'name', customers.name) AS customer,
+      json_build_object('id', games.id, 'name', games.name) AS game
     FROM
-        rentals
-        JOIN customers ON rentals."customerId" = customers.id
-        JOIN games ON rentals."gameId" = games.id;
+      rentals
+      JOIN customers ON rentals."customerId" = customers.id
+      JOIN games ON rentals."gameId" = games.id;
     `);
-    const rentals = result.rows.map(
-      ({ customerId, customerName, gameId, gameName, ...rental }) => {
-        const customer = { id: customerId, name: customerName };
-        const game = { id: gameId, name: gameName };
-        return { rental, customer, game };
-      }
-    );
-    res.send(rentals);
+    res.send(rentals.rows);
   } catch (err) {
     res.sendStatus(500);
   }
