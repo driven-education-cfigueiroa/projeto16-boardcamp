@@ -41,7 +41,10 @@ export async function insertRental(req, res) {
       [gameId]
     );
 
-    const checkStock = await db.query('SELECT "stockTotal" FROM games WHERE id = $1', [gameId]);
+    const checkStock = await db.query(
+      'SELECT "stockTotal" FROM games WHERE id = $1',
+      [gameId]
+    );
     if (checkStock.rows[0].stockTotal <= openRentals.rowCount) {
       return res.sendStatus(400);
     }
@@ -57,7 +60,6 @@ export async function insertRental(req, res) {
     if (rental.rowCount === 1) {
       res.sendStatus(201);
     }
-
   } catch (err) {
     console.log(err);
     res.sendStatus(500);
@@ -69,5 +71,32 @@ export async function finishRental(req, res) {
 }
 
 export async function deleteRental(req, res) {
-  res.sendStatus(200);
+  const rentalId = Number(req.params.id);
+  if (!rentalId || rentalId < 1 || !Number.isSafeInteger(rentalId)) {
+    return res.sendStatus(400);
+  }
+  try {
+    const rentalExists = await db.query('SELECT * FROM rentals WHERE id = $1', [
+      rentalId,
+    ]);
+    if (rentalExists.rowCount !== 1) {
+      return res.sendStatus(404);
+    }
+    const rentalIsFinished = await db.query(
+      'SELECT * FROM rentals WHERE id = $1 AND "returnDate" IS NOT NULL',
+      [rentalId]
+    );
+    if (rentalIsFinished.rowCount !== 1) {
+      return res.sendStatus(400);
+    }
+    const deleteRental = await db.query('DELETE FROM rentals WHERE id = $1', [
+      rentalId,
+    ]);
+    if (deleteRental.rowCount === 1) {
+      return res.sendStatus(200);
+    }
+  } catch (error) {
+    console.log(error);
+    res.sendStatus(500);
+  }
 }
