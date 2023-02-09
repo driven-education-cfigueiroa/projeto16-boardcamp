@@ -8,11 +8,11 @@ import {
 import { validateSchema } from '../middlewares/validateSchema.middleware.js';
 import { customerSchema } from '../schemas/customer.schema.js';
 
-const router = Router();
+const customers = Router();
 
-router.get('/customers/', listCustomers);
-router.post('/customers', validateSchema(customerSchema), insertCustomer);
-router.get('/customers/:id', listCustomer);
-router.put('/customers/:id', validateSchema(customerSchema), updateCustomer);
+customers.get('/', listCustomers);
+customers.post('/', validateSchema(customerSchema), insertCustomer);
+customers.get('/:id', listCustomer);
+customers.put('/:id', validateSchema(customerSchema), updateCustomer);
 
-export default router;
+export default customers;
