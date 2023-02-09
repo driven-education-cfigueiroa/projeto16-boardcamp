@@ -1,5 +1,14 @@
 import { db } from '../database/database.connection.js';
 
+export async function listGames(_req, res) {
+  try {
+    const result = await db.query('SELECT * FROM games');
+    res.send(result.rows);
+  } catch (error) {
+    res.sendStatus(500);
+  }
+}
+
 export async function insertGame(req, res) {
   const { name, image, stockTotal, pricePerDay } = req.body;
   try {
@@ -17,15 +26,6 @@ export async function insertGame(req, res) {
       return res.sendStatus(400);
     }
     res.sendStatus(201);
-  } catch (error) {
-    res.sendStatus(500);
-  }
-}
-
-export async function listGames(_req, res) {
-  try {
-    const result = await db.query('SELECT * FROM games');
-    res.send(result.rows);
   } catch (error) {
     res.sendStatus(500);
   }
