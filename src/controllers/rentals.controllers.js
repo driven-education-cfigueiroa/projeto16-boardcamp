@@ -1,6 +1,6 @@
 import { db } from '../database/database.connection.js';
 
-export async function listRentals(req, res) {
+export async function listRentals(_req, res) {
   try {
     const rentals = await db.query(`
     SELECT
@@ -19,7 +19,47 @@ export async function listRentals(req, res) {
 }
 
 export async function insertRental(req, res) {
-  res.sendStatus(200);
+  const { customerId, gameId, daysRented } = req.body;
+  try {
+    const existingGame = await db.query('SELECT * FROM games WHERE id = $1', [
+      gameId,
+    ]);
+    if (existingGame.rowCount !== 1) {
+      return res.sendStatus(400);
+    }
+
+    const existingCustomer = await db.query(
+      'SELECT * FROM customers WHERE id = $1',
+      [customerId]
+    );
+    if (existingCustomer.rowCount !== 1) {
+      return res.sendStatus(400);
+    }
+
+    const haveStock = await db.query(
+      'SELECT * FROM games WHERE id = $1 AND "stockTotal" > 0',
+      [gameId]
+    );
+    if (haveStock.rowCount !== 1) {
+      return res.sendStatus(400);
+    }
+
+    const rental = await db.query(
+      `
+    INSERT INTO rentals ("customerId", "gameId", "daysRented", "rentDate", "originalPrice")
+    VALUES ($1, $2, $3, NOW(), (SELECT "pricePerDay" FROM games WHERE id = $2) * $3);
+    `,
+      [customerId, gameId, daysRented]
+    );
+
+    if (rental.rowCount === 1) {
+      res.sendStatus(201);
+    }
+
+  } catch (err) {
+    console.log(err);
+    res.sendStatus(500);
+  }
 }
 
 export async function finishRental(req, res) {
