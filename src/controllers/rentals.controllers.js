@@ -36,11 +36,13 @@ export async function insertRental(req, res) {
       return res.sendStatus(400);
     }
 
-    const haveStock = await db.query(
-      'SELECT * FROM games WHERE id = $1 AND "stockTotal" > 0',
+    const openRentals = await db.query(
+      'SELECT * FROM rentals WHERE "gameId" = $1',
       [gameId]
     );
-    if (haveStock.rowCount !== 1) {
+
+    const checkStock = await db.query('SELECT "stockTotal" FROM games WHERE id = $1', [gameId]);
+    if (checkStock.rows[0].stockTotal <= openRentals.rowCount) {
       return res.sendStatus(400);
     }
 
