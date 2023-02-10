@@ -85,6 +85,19 @@ export async function finishRental(req, res) {
     if (rentalIsFinished.rowCount !== 0) {
       return res.sendStatus(400);
     }
+    const rental = rentalExists.rows[0];
+    const milliseconds =
+      new Date().getTime() - new Date(rental.rentDate).getTime();
+    const msToDays = Math.floor(milliseconds / 86400000);
+    let delayFee = 0;
+    if (msToDays > rental.daysRented) {
+      const addicionalDays = msToDays - rental.daysRented;
+      delayFee = addicionalDays * (rental.originalPrice / rental.daysRented);
+    }
+    await db.query(
+      'UPDATE rentals SET "returnDate" = NOW(), "delayFee" = $1 WHERE id=$2',
+      [delayFee, rentalId]
+    );
     res.sendStatus(200);
   } catch (error) {
     console.log(error);
