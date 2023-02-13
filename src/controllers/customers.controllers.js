@@ -2,7 +2,7 @@ import { db } from '../database/database.connection.js';
 
 export async function listCustomers(_req, res) {
   try {
-    const result = await db.query('SELECT * FROM games');
+    const result = await db.query('SELECT * FROM customers');
     res.send(result.rows);
   } catch (error) {
     res.sendStatus(500);

@@ -78,27 +78,22 @@ export async function finishRental(req, res) {
     if (rentalExists.rowCount !== 1) {
       return res.sendStatus(404);
     }
-    const rentalIsFinished = await db.query(
-      'SELECT * FROM rentals WHERE id = $1 AND "returnDate" IS NOT NULL',
-      [rentalId]
-    );
-    if (rentalIsFinished.rowCount !== 0) {
+    const rentalUpdateQuery = `
+    UPDATE rentals
+    SET "returnDate" = NOW(),
+        "delayFee" = CASE
+                        WHEN EXTRACT(DAY FROM age(NOW(), "rentDate")) > "daysRented"
+                        THEN ("originalPrice" / "daysRented") * (EXTRACT(DAY FROM age(NOW(), "rentDate")) - "daysRented")
+                        ELSE NULL
+                     END
+    WHERE "id" = $1 AND "returnDate" IS NULL;
+    `;
+    const rentalUpdate = await db.query(rentalUpdateQuery, [rentalId]);
+    if (rentalUpdate.rowCount === 1) {
+      return res.sendStatus(200);
+    } else {
       return res.sendStatus(400);
     }
-    const rental = rentalExists.rows[0];
-    const milliseconds =
-      new Date().getTime() - new Date(rental.rentDate).getTime();
-    const msToDays = Math.floor(milliseconds / 86400000);
-    let delayFee = 0;
-    if (msToDays > rental.daysRented) {
-      const addicionalDays = msToDays - rental.daysRented;
-      delayFee = addicionalDays * (rental.originalPrice / rental.daysRented);
-    }
-    await db.query(
-      'UPDATE rentals SET "returnDate" = NOW(), "delayFee" = $1 WHERE id=$2',
-      [delayFee, rentalId]
-    );
-    res.sendStatus(200);
   } catch (error) {
     console.log(error);
     res.sendStatus(500);
